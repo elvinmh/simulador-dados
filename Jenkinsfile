@@ -33,14 +33,17 @@ pipeline {
             }
             steps {
                 script {
-                    withSonarQubeEnv('Sonar') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=${project} \
-                            -Dsonar.projectName=${project} \
-                            -Dsonar.projectVersion=${projectVersion} \
-                            -Dsonar.sources=.
-                        """
+                    withCredentials([string(credentialsId: 'Sonar', variable: 'SONAR_TOKEN')]) {
+                        withSonarQubeEnv('Sonar') {
+                         sh """
+                                ${scannerHome}/bin/sonar-scanner \
+                             -Dsonar.projectKey=${project} \
+                             -Dsonar.projectName=${project} \
+                             -Dsonar.projectVersion=${projectVersion} \
+                             -Dsonar.sources=. \
+                                -Dsonar.token=${SONAR_TOKEN}
+                            """
+                        }
                     }
                 }
             }
