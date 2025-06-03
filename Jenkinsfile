@@ -19,10 +19,29 @@ pipeline {
 
         stage('Checkout code') {
             steps {
+                git(
+                    branch: 'master',
+                    credentialsId: repositoryCredentials,
+                    url: repository
+                )
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            environment {
+                scannerHome = tool 'Sonar'
+            }
+            steps {
                 script {
-                    git branch: 'master',
-                        credentialsId: repositoryCredentials,
-                        url: repository
+                    withSonarQubeEnv('Sonar') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=${project} \
+                            -Dsonar.projectName=${project} \
+                            -Dsonar.projectVersion=${projectVersion} \
+                            -Dsonar.sources=.
+                        """
+                    }
                 }
             }
         }
@@ -58,21 +77,10 @@ pipeline {
             steps {
                 script {
                     echo "Limpiando imagen local..."
-                    sh "docker rmi ${registry}"
+                    sh "docker rmi ${registry} || true"
                 }
             }
         }
-
-        // Opcional
-        /*
-        stage('Análisis SonarQube') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh 'sonar-scanner -Dsonar.projectKey=simulador-dados -Dsonar.sources=. -Dsonar.host.url=http://localhost:9000 -Dsonar.login=admin'
-                }
-            }
-        }
-        */
     }
 
     post {
